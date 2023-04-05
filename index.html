@@ -8,6 +8,15 @@
 	</head>
 	<body>
 		<h1>Test OAuth</h1>
+
 		<a href="/connect">Connect</a>
+
+		<form action="/revoke" method="post">
+			<label>
+				Access token
+				<input name="token" />
+			</label>
+			<button>Revoke</button>
+		</form>
 	</body>
 </html>

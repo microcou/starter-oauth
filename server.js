@@ -1,6 +1,8 @@
 const crypto = require("node:crypto");
+const { URLSearchParams } = require("node:url");
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 
 const CONFIG = {
 	port: 3000,
@@ -17,12 +19,14 @@ app.get("/connect", function (req, res) {
 	const state = crypto.randomBytes(32).toString("hex");
 
 	const url =
-		"https://www.linkedin.com/oauth/v2/authorization" +
-		`?client_id=${CONFIG.client_id}` +
-		`&redirect_uri=${CONFIG.redirect_uri}` +
-		`&state=${state}` +
-		"&response_type=code" +
-		"&scope=r_liteprofile,w_member_social,rw_organization_admin";
+		"https://www.linkedin.com/oauth/v2/authorization?" +
+		new URLSearchParams({
+			client_id: CONFIG.client_id,
+			redirect_uri: CONFIG.redirect_uri,
+			state: state,
+			response_type: "code",
+			scope: "r_liteprofile,w_member_social,rw_organization_admin",
+		});
 
 	res.cookie("oauth_state", state, { httpOnly: true });
 	res.redirect(url);
@@ -36,16 +40,15 @@ app.get("/oauthcallback", async function (req, res) {
 		return res.status(403).send("state mismatch"); // maybe CSRF
 	}
 
-	const formData =
-		`client_id=${CONFIG.client_id}` +
-		`&client_secret=${CONFIG.client_secret}` +
-		`&redirect_uri=${CONFIG.redirect_uri}` +
-		`&code=${code}` +
-		"&grant_type=authorization_code";
-
 	const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
 		method: "POST",
-		body: formData,
+		body: new URLSearchParams({
+			client_id: CONFIG.client_id,
+			client_secret: CONFIG.client_secret,
+			redirect_uri: CONFIG.redirect_uri,
+			code: code,
+			grant_type: "authorization_code",
+		}),
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded",
 		},
@@ -63,6 +66,24 @@ app.get("/oauthcallback", async function (req, res) {
 	// }
 
 	res.send("Connected successfully!");
+});
+
+app.post("/revoke", bodyParser.urlencoded({ extended: false }), async function (req, res) {
+	const token = req.body.token;
+
+	await fetch("https://www.linkedin.com/oauth/v2/revoke", {
+		method: "POST",
+		body: new URLSearchParams({
+			client_id: CONFIG.client_id,
+			client_secret: CONFIG.client_secret,
+			token: token,
+		}),
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded",
+		},
+	});
+
+	res.send("Token revoked successfully!");
 });
 
 app.get("/", function (req, res) {
