@@ -11,6 +11,12 @@
 
 		<a href="/connect">Connect</a>
 
+		<br />
+
+		<button id="btnGetUserInfo">Get user info</button>
+
+		<br />
+
 		<form action="/revoke" method="post">
 			<label>
 				Access token
@@ -18,5 +24,13 @@
 			</label>
 			<button>Revoke</button>
 		</form>
+
+		<script>
+			document.getElementById("btnGetUserInfo").addEventListener("click", async function () {
+				const res = await fetch("/userinfo");
+				const userinfo = await res.json();
+				alert(JSON.stringify(userinfo));
+			});
+		</script>
 	</body>
 </html>

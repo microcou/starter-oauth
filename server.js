@@ -86,6 +86,23 @@ app.post("/revoke", bodyParser.urlencoded({ extended: false }), async function (
 	res.send("Token revoked successfully!");
 });
 
+app.get("/userinfo", async function (req, res) {
+	const accessToken = "..."; // TODO: authenticate the user and retrieve the access token
+
+	const apiRes = await fetch(
+		"https://api.linkedin.com/v2/me?projection=(localizedFirstName, localizedLastName)",
+		{
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		}
+	);
+
+	const userinfo = await apiRes.json();
+
+	res.send(userinfo);
+});
+
 app.get("/", function (req, res) {
 	res.sendFile(__dirname + "/index.html");
 });
